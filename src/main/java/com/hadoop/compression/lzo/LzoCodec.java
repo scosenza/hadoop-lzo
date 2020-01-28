@@ -68,6 +68,10 @@ public class LzoCodec implements Configurable, CompressionCodec {
   private static boolean nativeLzoLoaded = false;
 
   static {
+    initializeCodec();
+  }
+
+  private static void initializeCodec() {
     if (GPLNativeCodeLoader.isNativeCodeLoaded()) {
       nativeLzoLoaded = LzoCompressor.isNativeLzoLoaded() &&
       LzoDecompressor.isNativeLzoLoaded();
@@ -91,6 +95,9 @@ public class LzoCodec implements Configurable, CompressionCodec {
    */
   public static boolean isNativeLzoLoaded(Configuration conf) {
     assert conf != null : "Configuration cannot be null!";
+    if (!nativeLzoLoaded) {
+      initializeCodec();
+    }
     return nativeLzoLoaded && conf.getBoolean("hadoop.native.lib", true);
   }
 

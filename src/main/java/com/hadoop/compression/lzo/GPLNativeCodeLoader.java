@@ -45,15 +45,8 @@ public class GPLNativeCodeLoader {
     try {
       //try to load the lib
       if (!useBinariesOnLibPath()) {
-        File unpackedFile = unpackBinaries();
-        if (unpackedFile != null) { // the file was successfully unpacked
-          String path = unpackedFile.getAbsolutePath();
-          System.load(path);
-          LOG.info("Loaded native gpl library from the embedded binaries");
-        } else { // fall back
-          System.loadLibrary(LIBRARY_NAME);
-          LOG.info("Loaded native gpl library from the library path");
-        }
+        unpackAndLoadBinaries(LIBRARY_NAME);
+        unpackAndLoadBinaries("lzo2");
       } else {
         System.loadLibrary(LIBRARY_NAME);
         LOG.info("Loaded native gpl library from the library path");
@@ -62,6 +55,18 @@ public class GPLNativeCodeLoader {
     } catch (Throwable t) {
       LOG.error("Could not load native gpl library", t);
       nativeLibraryLoaded = false;
+    }
+  }
+
+  private static void unpackAndLoadBinaries(String libraryName) {
+    File unpackedFile = unpackBinaries(libraryName);
+    if (unpackedFile != null) { // the file was successfully unpacked
+      String path = unpackedFile.getAbsolutePath();
+      System.load(path);
+      LOG.error("Loaded " + path + " " + libraryName + " from the embedded binaries");
+    } else { // fall back
+      System.loadLibrary(libraryName);
+      LOG.error("Loaded " + libraryName + " from the library path");
     }
   }
 
@@ -82,11 +87,12 @@ public class GPLNativeCodeLoader {
    * unpacks it in a temp location, and returns that file. If the native library
    * is not found by the classloader, returns null.
    */
-  private static File unpackBinaries() {
+  private static File unpackBinaries(String libraryName) {
     // locate the binaries inside the jar
-    String fileName = System.mapLibraryName(LIBRARY_NAME);
+    String fileName = System.mapLibraryName(libraryName);
     String directory = getDirectoryLocation();
     // use the current defining classloader to load the resource
+    LOG.info("Trying to load " + directory + "/" + fileName);
     InputStream is =
         GPLNativeCodeLoader.class.getResourceAsStream(directory + "/" + fileName);
     if (is == null) {
